@@ -74,7 +74,7 @@ Elice class stores your session and allows you to access API endpoints with few 
         'board_id': 1,
         'title': 'Test article',
         'content': 'Hello world!\nThis is a test article',
-        'is_secret': false
+        'is_secret': False
     })
     assert(result['_result']['status'] == 'ok')
     ```
