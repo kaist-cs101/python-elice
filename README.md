@@ -9,6 +9,22 @@ You can browse available API endpoints at [API test panel](https://api-v4.elice.
 
 ## How to use
 
+### Install
+
+Before installing the library, please make sure to register your SSH key on this Gitlab server.
+Otherwise, you will not be allowed to install this project from this server.
+
+Run:
+```
+$ pip install git+ssh://git@git.elicer.io:2201/elice/python-elice.git
+```
+to install `python-elice` on your local environment.
+
+If you have already installed the older version and want to install the latest version, run:
+```
+$ pip install --upgrade git+ssh://git@git.elicer.io:2201/elice/python-elice.git
+```
+
 ### Elice
 
 Elice class stores your session and allows you to access API endpoints with few methods.
@@ -20,7 +36,7 @@ Elice class stores your session and allows you to access API endpoints with few 
 
     **Example**
 
-    ```
+    ```python
     from pyelice import Elice
 
     elice = Elice('http://johndoe.elicer.io:6663/')
@@ -35,7 +51,7 @@ Elice class stores your session and allows you to access API endpoints with few 
 
     **Example**
 
-    ```
+    ```python
     elice.login('john_doe@elicer.io', 'naivepassword')
     ```
 
@@ -45,7 +61,7 @@ Elice class stores your session and allows you to access API endpoints with few 
 
     **Example**
 
-    ```
+    ```python
     elice.set_sessionkey('wjeoiji2o3iwguhdujsnjvcoihwfe')
     ```
 
@@ -56,7 +72,7 @@ Elice class stores your session and allows you to access API endpoints with few 
 
     **Example**
 
-    ```
+    ```python
     result = self.get('/common/course/get/', {'course_id': 1})
     course = result['course']
     user_course_role = result['user_course_role']
@@ -69,7 +85,7 @@ Elice class stores your session and allows you to access API endpoints with few 
 
     **Example**
 
-    ```
+    ```python
     result = self.get('/common/board/article/edit/', {
         'board_id': 1,
         'title': 'Test article',
@@ -92,7 +108,7 @@ Elice class stores your session and allows you to access API endpoints with few 
 
     **Example**
 
-    ```
+    ```python
     for user in elice.get_iter('/common/course/user/list/', { 'course_id': 1 }, lambda x: x['users']):
         print('%s %s' % (user['firstname'], user['lastname']))
     ```
