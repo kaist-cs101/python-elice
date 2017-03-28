@@ -27,7 +27,7 @@ $ pip install --upgrade git+ssh://git@git.elicer.io:2201/elice/python-elice.git
 
 ### Elice
 
-Elice class stores your session and allows you to access API endpoints with few methods.
+`Elice` class stores your session and allows you to access API endpoints with few methods.
 
 * *`Elice(url=PRODUCTION_ELICE_API_URL)`*
 
@@ -37,14 +37,14 @@ Elice class stores your session and allows you to access API endpoints with few 
     **Example**
 
     ```python
-    from pyelice import Elice
+    from pyelice import Elice, EliceResponseError
 
     elice = Elice('http://johndoe.elicer.io:6663/')
     ```
 
-* *`login(email, password)`*
+* *`login(email, password, org='academy')`*
 
-    This logs in to Elice with given `email` and `password` as parameters.
+    This logs in to Elice's `organization` with given `email` and `password`.
     The session key will be retrieved and stored in the object.
 
     This raises `ValueError` when failed to log in with given parameters.
@@ -52,7 +52,7 @@ Elice class stores your session and allows you to access API endpoints with few 
     **Example**
 
     ```python
-    elice.login('john_doe@elicer.io', 'naivepassword')
+    elice.login('john_doe@elicer.io', 'naivepassword', 'academy')
     ```
 
 * *`set_sessionkey(sessionkey)`*
@@ -70,6 +70,8 @@ Elice class stores your session and allows you to access API endpoints with few 
     This performs a `GET` request to the given `path` with given parameters as `data`.
     Authentication token will be included in request's header when `auth` is true.
 
+    This raises `EliceResponseError` when the server returns an object with error information.
+
     **Example**
 
     ```python
@@ -83,16 +85,20 @@ Elice class stores your session and allows you to access API endpoints with few 
     This performs a `POST` request to the given `path` with given parameters as `data`.
     Authentication token will be included in request's header when `auth` is true.
 
+    This raises `EliceResponseError` when the server returns an object with error information.
+
     **Example**
 
     ```python
-    result = self.get('/common/board/article/edit/', {
-        'board_id': 1,
-        'title': 'Test article',
-        'content': 'Hello world!\nThis is a test article',
-        'is_secret': False
-    })
-    assert(result['_result']['status'] == 'ok')
+    try:
+      result = self.get('/common/board/article/edit/', {
+          'board_id': 1,
+          'title': 'Test article',
+          'content': 'Hello world!\nThis is a test article',
+          'is_secret': False
+      })
+    except EliceResponseError:
+      print('Failed to write an article.')
     ```
 
 * *`get_iter(path, data, extract_list, auth=True, offset=0, count=DEFAULT_COUNT)`*
@@ -111,4 +117,60 @@ Elice class stores your session and allows you to access API endpoints with few 
     ```python
     for user in elice.get_iter('/common/course/user/list/', { 'course_id': 1 }, lambda x: x['users']):
         print('%s %s' % (user['firstname'], user['lastname']))
+    ```
+
+### EliceResponseError
+
+`EliceResponseError` class extends `Exception` and contains error object retrieved from the server.
+
+* *`message`*
+
+    Member variable `message` contains a fail message extracted from the object.
+
+    **Example**
+
+    ```python
+    try:
+      result = self.get('/common/course/get/', {'course_id': 1})
+    except EliceResponseError as error:
+      print(error.message)
+      # invalid parameter exists
+    ```
+
+* *`code`*
+
+    Member variable `code` contains a fail code extracted from the object.
+    The value is `unknown` when unexpected object is retrieved.
+
+    **Example**
+
+    ```python
+    try:
+      result = self.get('/common/organization/get/', {'organization_name_short': 'blah'})
+    except EliceResponseError as error:
+      print(error.code)
+      # organization_not_exist
+    ```
+
+* *`body`*
+
+    Member variable `body` contains a full error object retrieved from the server.
+
+    **Example**
+
+    ```python
+    try:
+      result = self.get('/common/course/get/', {'course_id': 1})
+    except EliceResponseError as error:
+      print(error.body)
+      # {
+      #     "_result": {
+      #         "reason": "param",
+      #         "status": "fail"
+      #     },
+      #     "fail_detail": {
+      #         "course_id": "does not exist"
+      #     },
+      #     "fail_message": "invalid parameter exists"
+      # }
     ```

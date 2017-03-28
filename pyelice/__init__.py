@@ -7,9 +7,22 @@ import urllib.request
 import urllib.error
 
 DEFAULT_URL = 'https://api-v4.elice.io'
+DEFAULT_ORGANIZATION_NAME = 'academy'
 DEFAULT_COUNT = 20
 DEFAULT_ENCODING = 'utf-8'
 DEFAULT_RETRY_DELAY = 5
+
+class EliceResponseError(Exception):
+    def __init__(self, result):
+        try:
+            self.message = result['fail_message']
+        except:
+            self.message = 'unknown error is received from the server'
+        try:
+            self.code = result['fail_code']
+        except:
+            self.code = 'unknown'
+        self.body = result
 
 class Elice:
     def __init__(self, url=DEFAULT_URL):
@@ -57,6 +70,11 @@ class Elice:
                 print('Will try again in %.2f seconds' % DEFAULT_RETRY_DELAY)
                 time.sleep(DEFAULT_RETRY_DELAY)
 
+        result_object = json.loads(cont.decode(DEFAULT_ENCODING))
+
+        if result_object['_result']['status'] != 'ok':
+            raise EliceResponseError(result_object)
+
         return json.loads(cont.decode(DEFAULT_ENCODING))
 
     def get(self, path, data, auth=True):
@@ -85,8 +103,21 @@ class Elice:
                 break
             current_offset += count
 
-    def login(self, email, password):
-        result = self.post('/auth/login/', {'email': email, 'password': password}, auth=False)
+    def login(self, email, password, org=DEFAULT_ORGANIZATION_NAME):
+        try:
+            org_result = self.get('/common/organization/get/', {'organization_name_short': org}, auth=False)
+        except EliceResponseError as error:
+            if error.code == 'organization_not_exist':
+                raise ValueError('Given organization name is not found on the server.')
+            else:
+                raise
+        self.organization = org_result['organization']
+
+        result = self.post('/auth/login/', {
+            'organization_id': self.organization['id'],
+            'email': email,
+            'password': password
+        }, auth=False)
         if 'sessionkey' in result:
             self.sessionkey = result['sessionkey']
         else:
